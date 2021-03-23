@@ -63,9 +63,13 @@ def is_card_playable(card):
 	'''Checks to see if the card value can be played into the discard pile, returns True if so, and False if not.'''
 	
 	card_value = False
-	for numsuit in card.split(" of "):
-		if numsuit in discard_pile[-1] or numsuit == "8" or numsuit == discard_pile[-1]:
-			card_value = True
+	card_attributes = card.split(" of ")
+	card_type = card_attributes[0]
+	card_suit = card_attributes[1]
+	
+	if card_type in discard_pile[-1] or card_suit in discard_pile[-1] or card_type == "8":
+		card_value = True
+	
 	return card_value
 
 
