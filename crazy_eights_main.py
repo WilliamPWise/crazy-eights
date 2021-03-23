@@ -1,7 +1,13 @@
 #!/usr/bin/env python3
-import random
+import random, os
 
 #important functions
+def clean_the_screen():
+	
+	'''A simple function to clean the screen after each round of turns.'''
+	
+	os.system('cls' if os.name == 'nt' else 'clear')
+
 
 def new_deck():
 	
@@ -15,8 +21,8 @@ def new_deck():
 			deck.append(card + " of " + suit)
 	return deck
 
-def draw_cards(num_of_cards):
-	
+
+def draw_cards(num_of_cards):	
 	"""Returns a list of drawn cards, removes them from the deck"""
 	
 	cards_drawn = []
@@ -24,23 +30,36 @@ def draw_cards(num_of_cards):
 		cards_drawn.append(card_deck.pop())
 	return cards_drawn
 
+
 def reshuffle_deck():
 	global card_deck
 	'''Shuffles the Discard pile back into the deck, while removing any suit proxies and keeping the last played card'''
 	
+	proxy_cards = ["Spades", "Hearts", "Clubs", "Diamonds"]
 	last_card = discard_pile.pop(-1)
+	
+	if last_card in proxy_cards: # If the last card is an 8, this makes sure the 8 and the proxy doesn't get shuffled back in. 
+		last_proxy = last_card
+		last_card = discard_pile.pop(-1)
+	
 	for card in discard_pile:
 		card_deck.append(discard_pile.pop())
-	for proxy in ["Spades", "Hearts", "Clubs", "Diamonds"]:
+	
+	for proxy in proxy_cards:
 		for card in card_deck:
 			if card == proxy:
 				card_deck.remove(proxy)
+	
 	card_mixer.shuffle(card_deck)
 	discard_pile.append(last_card)
+	
+	if "8" in last_card:
+		discard_pile.append(last_proxy)
+		
 	print("*No more cards were left in the deck! Discarded cards were shuffled back in.* \n")
 
-def card_is_playable(card):
-	
+
+def is_card_playable(card):	
 	'''Checks to see if the card value can be played into the discard pile, returns True if so, and False if not.'''
 	
 	card_value = False
@@ -48,6 +67,7 @@ def card_is_playable(card):
 		if numsuit in discard_pile[-1] or numsuit == "8" or numsuit == discard_pile[-1]:
 			card_value = True
 	return card_value
+
 
 def cpu_turn(player):
 	global discard_pile
@@ -58,7 +78,7 @@ def cpu_turn(player):
 	playable_cards = []
 	can_play = False
 	for card in player_hands[player]:
-		if card_is_playable(card) == True:
+		if is_card_playable(card) == True:
 			playable_cards.append(card)
 			can_play = True
 	
@@ -74,7 +94,7 @@ def cpu_turn(player):
 		player_hands[player] += draw_cards(1)
 		draw_count += 1
 		new_card = player_hands[player][-1]
-		if card_is_playable(new_card) == True:
+		if is_card_playable(new_card) == True:
 			playable_cards.append(new_card)
 			can_play = True
 				
@@ -97,7 +117,6 @@ def cpu_turn(player):
 		proxy_suit = suits[card_mixer.randrange(4)]  # Cpu players choose a random suit!		
 		discard_pile.append(proxy_suit)
 		print("The suit is now", proxy_suit + "!\n")
-	
 		
 
 def user_turn(player):
@@ -112,7 +131,7 @@ def user_turn(player):
 	for card in player_hands[player]:
 		print("|" + str(card_number) + "|:", card)
 		card_number += 1	
-		if card_is_playable(card) == True:
+		if is_card_playable(card) == True:
 			can_play_hand = True
 
 	# Conditions if the player's hand has at least one playable card. 
@@ -123,7 +142,7 @@ def user_turn(player):
 		
 		if 1 <= selection <= card_number:			
 			card_select = player_hands[player][selection - 1]						
-			if card_is_playable(card_select) == True:					
+			if is_card_playable(card_select) == True:					
 				discard_pile.append(card_select)
 				player_hands[player].remove(card_select)		
 				break				
@@ -151,16 +170,15 @@ def user_turn(player):
 			new_card = player_hands[player][-1]
 			print(new_card)
 			
-			if card_is_playable(new_card) == True:
+			if is_card_playable(new_card) == True:
 				confirmation = input("\nPress enter to play the last card you drew. ")
 				discard_pile.append(new_card)
 				player_hands[player].remove(new_card)
 				break
 		
-	print("\n" + player, "played a", "**" + discard_pile[-1] + "**!\n") 
-	
 	if "8" in discard_pile[-1]:
 		suits = ["Spades", "Hearts", "Clubs", "Diamonds"]
+		print("\n" + player, "played an", "**" + discard_pile[-1] + "**!\n")
 		print("What suit would you like to change it to?\n")
 		print("|1|: Spades |2|: Hearts |3|: Clubs |4|: Diamonds")
 		while True:
@@ -171,9 +189,14 @@ def user_turn(player):
 			else:
 				print("Type the number next to the suit you want, and press enter.")
 		
-		discard_pile .append(proxy_suit)
+		discard_pile.append(proxy_suit)
+		clean_the_screen()
 		print("\nThe suit is now", proxy_suit + "!\n")
-
+	
+	else:
+		clean_the_screen()
+		print("\n" + player, "played a", "**" + discard_pile[-1] + "**!\n") 
+		
 
 
 # ***-----The Main Gameplay Code!-----***
@@ -192,12 +215,14 @@ print("***Welcome to the Crazy Eights Program!***\n")
 num_of_players = int(input("How many players would you like? "))
 
 while True:
+	
 	if 4 >= num_of_players >= 2:
 		for index in range(num_of_players):
 			active_players.append(player_names[index])
 			player_hands[player_names[index]] = []
 			scorecards[player_names[index]] = 0
 		break
+	
 	else:
 		num_of_players = int(input("Choose between 2, 3, or 4 Players! "))
 		
@@ -266,17 +291,25 @@ while True:
 			break
 	
 	# Display the point values of each card:
+
+	confirm = input("Press enter to tally up the score. ")
+	clean_the_screen()
 	
 	scorecard_points = { "Ace": 1, "King": 10, "Queen": 10, "Jack": 10, "10": 10, "9": 9, "8": 50, "7": 7, "6": 6, "5": 5, "4": 4, "3": 3, "2": 2 }	
 	
+	
 	print("Here are the point values of each card:\n")
+	print_interval = 0
 	for point_value in scorecard_points.keys():
-		print(point_value + " -->", scorecard_points[point_value], "points")
-	print("")
+		print("| ", point_value + " -->", scorecard_points[point_value], "points  ", end='')
+		print_interval += 1
+		if print_interval == 4:
+			print("|\n", end='')
+			print_interval = 0
 		
 	# Add up the points given to the winner, according to the cards in each player's hands.
 	
-	print("Here are the cards left in each player's hand:\n")
+	print("\n\nHere are the cards left in each player's hand:\n")
 	
 	round_total = 0
 	
@@ -324,3 +357,4 @@ while True:
 	
 	confirm = input("Press enter to begin the next round!")
 	active_players.append(active_players.pop(0))
+	clean_the_screen()
