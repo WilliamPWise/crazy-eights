@@ -22,17 +22,19 @@ def new_deck():
 	return deck
 
 
-def draw_cards(num_of_cards):	
+def draw_cards(num_of_cards, card_deck):	
+	
 	"""Returns a list of drawn cards, removes them from the deck"""
 	
 	cards_drawn = []
 	for card in range(num_of_cards):
-		cards_drawn.append(card_deck.pop())
+		cards_drawn.append(card_deck[-1])
+		del card_deck[-1]
 	return cards_drawn
 
 
-def reshuffle_deck():
-	global card_deck
+def reshuffle_deck(card_deck, discard_pile):
+
 	'''Shuffles the Discard pile back into the deck, while removing any suit proxies and keeping the last played card'''
 	
 	proxy_cards = ["Spades", "Hearts", "Clubs", "Diamonds"]
@@ -73,8 +75,8 @@ def is_card_playable(card):
 	return card_value
 
 
-def cpu_turn(player):
-	global discard_pile
+def cpu_turn(player, card_deck, discard_pile):
+
 	'''Recreates the events of a turn taken by computer players'''
 	
 	# Check to see if there are any playable cards, and list them out temporarily.
@@ -93,9 +95,9 @@ def cpu_turn(player):
 	while can_play == False:
 		
 		if card_deck == []:
-			reshuffle_deck()
+			reshuffle_deck(card_deck, discard_pile)
 			
-		player_hands[player] += draw_cards(1)
+		player_hands[player] += draw_cards(1, card_deck)
 		draw_count += 1
 		new_card = player_hands[player][-1]
 		if is_card_playable(new_card) == True:
@@ -123,8 +125,8 @@ def cpu_turn(player):
 		print("The suit is now", proxy_suit + "!\n")
 		
 
-def user_turn(player):
-	global discard_pile
+def user_turn(player, card_deck, discard_pile):
+	
 	'''Creates dialogue and input for the user to play a card during their turn'''
 	
 	# The generic interface
@@ -167,9 +169,9 @@ def user_turn(player):
 		while True:
 			
 			if card_deck == []:
-				reshuffle_deck()
+				reshuffle_deck(card_deck, discard_pile)
 			
-			player_hands[player] += draw_cards(1)
+			player_hands[player] += draw_cards(1, card_deck)
 			draw_count += 1
 			new_card = player_hands[player][-1]
 			print(new_card)
@@ -243,12 +245,15 @@ while True:
 	# Deal the cards to each player.
 	
 	for hand in player_hands.keys():
-		player_hands[hand] += draw_cards(5)
+		if num_of_players == 2:
+			player_hands[hand] += draw_cards(7, card_deck)
+		else:
+			player_hands[hand] += draw_cards(5, card_deck)
 	
 	# Set up the discard pile and its starting card. 
 		
 	discard_pile = []
-	discard_pile += draw_cards(1)
+	discard_pile += draw_cards(1, card_deck)
 	
 	print("\nA round has now started! The starting card is a **" + discard_pile[0] + "**!\n")
 	
@@ -257,7 +262,7 @@ while True:
 	while True:
 		if "8" in discard_pile[0]:
 			card_deck.insert(0, discard_pile.pop())
-			discard_pile += draw_cards(1)
+			discard_pile += draw_cards(1, card_deck)
 			print("Oops! Let's try a diferent card. This time, it's a " + discard_pile[0] + "!\n")
 		else: 
 			card_mixer.shuffle(card_deck)
@@ -276,9 +281,9 @@ while True:
 	while True:	
 		active_player = active_players[player_index]
 		if active_player == "You":
-			user_turn(active_player)
+			user_turn(active_player, card_deck, discard_pile)
 		else:
-			cpu_turn(active_player)
+			cpu_turn(active_player, card_deck, discard_pile)
 		player_index += 1
 		
 		if player_index == len(active_players):
